@@ -409,3 +409,13 @@ export async function safeFetchJson(url, options = {}) {
     return { ok: false, status: 0, networkError: true, error: err.message };
   }
 }
+
+// Convert local File to base64 Data URL (guarantees upload works without server disk)
+export function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.readAsDataURL(file);
+  });
+}

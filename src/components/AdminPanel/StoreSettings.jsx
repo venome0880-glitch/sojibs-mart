@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, Save, CheckCircle, Flame, Image as ImageIcon, Link, Phone, Facebook, Globe, Sparkles, RefreshCw, Trash2 } from 'lucide-react';
+import { readFileAsDataUrl } from '../../utils/localStoreFallback';
 
 export default function StoreSettings({
   config = {},
@@ -19,64 +20,84 @@ export default function StoreSettings({
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Handle Photo Upload
+  // Handle Photo Upload (with automatic fallback to base64 Data URL)
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append('productPhoto', file);
 
     setIsUploading(true);
     setSuccessMsg('');
 
     try {
-      const res = await fetch('/api/admin/upload-photo', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: formData
-      });
+      let finalUrl = '';
+      try {
+        const formData = new FormData();
+        formData.append('productPhoto', file);
+        const res = await fetch('/api/admin/upload-photo', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+          body: formData
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.photoUrl) finalUrl = data.photoUrl;
+        }
+      } catch (e) {
+        console.warn('Backend upload unavailable, using direct Data URL');
+      }
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      // If backend returned HTML (e.g. Vercel static) or failed, convert file to Data URL
+      if (!finalUrl) {
+        finalUrl = await readFileAsDataUrl(file);
+      }
 
-      setProductPhotoUrl(data.photoUrl);
-      onPhotoUploaded(data.photoUrl);
-      setSuccessMsg('Product photo uploaded successfully! Store page updated.');
+      setProductPhotoUrl(finalUrl);
+      onPhotoUploaded(finalUrl);
+      setSuccessMsg('Product photo updated successfully! Click "Save Settings" below to apply.');
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      alert('Error uploading photo: ' + err.message);
+      alert('Error updating photo: ' + err.message);
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Handle Logo or Favicon Upload
+  // Handle Logo or Favicon Upload (with automatic fallback to base64 Data URL)
   const handleBrandingUpload = async (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
-
     setUploadingField(field);
     try {
-      const res = await fetch('/api/admin/upload-customizer-image', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` },
-        body: formData
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      let finalUrl = '';
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch('/api/admin/upload-customizer-image', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+          body: formData
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.imageUrl) finalUrl = data.imageUrl;
+        }
+      } catch (e) {
+        console.warn('Backend upload unavailable, using direct Data URL');
+      }
+
+      if (!finalUrl) {
+        finalUrl = await readFileAsDataUrl(file);
+      }
 
       if (field === 'logo') {
-        setLogoImageUrl(data.imageUrl);
+        setLogoImageUrl(finalUrl);
       } else if (field === 'favicon') {
-        setFaviconUrl(data.imageUrl);
+        setFaviconUrl(finalUrl);
       }
-      setSuccessMsg(`${field === 'logo' ? 'Logo' : 'Favicon'} uploaded successfully! Click 'Save Settings' to apply.`);
+      setSuccessMsg(`${field === 'logo' ? 'Logo' : 'Favicon'} updated successfully! Click "Save Settings" below to apply.`);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
       alert('Upload error: ' + err.message);

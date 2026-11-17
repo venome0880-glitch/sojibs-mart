@@ -16,6 +16,7 @@ import {
   Trash2,
   ExternalLink
 } from 'lucide-react';
+import { readFileAsDataUrl } from '../../utils/localStoreFallback';
 
 const PRESET_COLORS = [
   { name: 'Ember Red (Default)', hex: '#d6361a', hover: '#b82b13' },
@@ -104,35 +105,46 @@ export default function WebsiteCustomizer({
   const [successMsg, setSuccessMsg] = useState('');
   const [uploadingTarget, setUploadingTarget] = useState(null);
 
-  // Generic Image Uploader
+  // Generic Image Uploader (with automatic fallback to base64 Data URL)
   const handleImageUpload = async (e, targetField) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
-
     setUploadingTarget(targetField);
     try {
-      const res = await fetch('/api/admin/upload-customizer-image', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` },
-        body: formData
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      let finalUrl = '';
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch('/api/admin/upload-customizer-image', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+          body: formData
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.imageUrl) finalUrl = data.imageUrl;
+        }
+      } catch (e) {
+        console.warn('Backend upload unavailable, using direct Data URL');
+      }
+
+      if (!finalUrl) {
+        finalUrl = await readFileAsDataUrl(file);
+      }
 
       if (targetField === 'logoImageUrl') {
-        setTheme(prev => ({ ...prev, logoImageUrl: data.imageUrl, logoType: 'image' }));
+        setTheme(prev => ({ ...prev, logoImageUrl: finalUrl, logoType: 'image' }));
       } else if (targetField === 'faviconUrl') {
-        setTheme(prev => ({ ...prev, faviconUrl: data.imageUrl }));
+        setTheme(prev => ({ ...prev, faviconUrl: finalUrl }));
       } else if (targetField === 'heroImageUrl') {
-        setHero(prev => ({ ...prev, heroImageUrl: data.imageUrl }));
+        setHero(prev => ({ ...prev, heroImageUrl: finalUrl }));
       }
-      setSuccessMsg('Image uploaded successfully!');
-      setTimeout(() => setSuccessMsg(''), 3000);
+      setSuccessMsg('Image updated successfully! Click "Save All Changes" below to apply.');
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Upload error: ' + err.message);
     } finally {
       setUploadingTarget(null);
     }

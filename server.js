@@ -7,12 +7,20 @@ const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const DB_FILE = path.join(__dirname, 'data', 'db.json');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const isVercel = !!process.env.VERCEL;
+const DB_FILE = isVercel ? path.join('/tmp', 'db.json') : path.join(__dirname, 'data', 'db.json');
+const UPLOADS_DIR = isVercel ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
+
+if (isVercel && !fs.existsSync(DB_FILE)) {
+  const seed = path.join(__dirname, 'data', 'db.json');
+  if (fs.existsSync(seed)) {
+    try { fs.copyFileSync(seed, DB_FILE); } catch (e) {}
+  }
+}
 
 // Ensure uploads directory exists
 if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  try { fs.mkdirSync(UPLOADS_DIR, { recursive: true }); } catch (e) {}
 }
 
 // Multer storage for product photo upload
@@ -755,6 +763,10 @@ if (fs.existsSync(DIST_DIR)) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Sojib's Mart Server is running on port ${PORT}`);
-});
+if (!isVercel) {
+  app.listen(PORT, () => {
+    console.log(`Sojib's Mart Server is running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
