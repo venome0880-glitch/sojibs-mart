@@ -1,0 +1,213 @@
+{
+  "config": {
+    "shopName": "Sojib's Mart",
+    "tagline": "ইলেকট্রিক হিটার চুলা (Electric Heater Chula)",
+    "currency": "৳",
+    "whatsappNumber": "880 01796017442",
+    "whatsappClean": "88001796017442",
+    "facebookPage": "https://www.facebook.com/profile.php?id=61595742304637",
+    "adminPasswordHash": "sojib123",
+    "productPhotoUrl": "/uploads/heater-product-1794951333947.jpg",
+    "bannerPhotoUrl": "/images/heater-chula-banner.jpg",
+    "freeDeliveryText": "সারাদেশে ফ্রি হোম ডেলিভারি ও ক্যাশ অন ডেলিভারি",
+    "logoImageUrl": "/uploads/heater-product-1794953581498.jpg",
+    "faviconUrl": "/uploads/heater-product-1794953542927.jpg"
+  },
+  "winterOffer": {
+    "active": true,
+    "badge": "হিটার চুলা স্পেশাল অফার",
+    "text": "শীতের বিশেষ ছাড়: প্রতিটি ইলেকট্রিক হিটার চুলায় সারাদেশে ১০০% ফ্রি হোম ডেলিভারি + ক্যাশ অন ডেলিভারি!"
+  },
+  "models": [
+    {
+      "id": "model-8-1000",
+      "size": "8 inch",
+      "sizeNumber": 8,
+      "wattage": 1000,
+      "name": "8\" Electric Heater Chula 1000W",
+      "bengaliName": "৮\" ইলেকট্রিক হিটার চুলা (১০০০ ওয়াট)",
+      "subtitle": "কয়েল টাইপ সিরামিক চুলা - চা, তরকারি রান্না ও শীতের রুম হিটিং",
+      "price": 950,
+      "stock": 24,
+      "isSoldOut": false,
+      "roomCoverage": "রান্না ও ছোট রুম",
+      "coils": "১০০০W লাল নাইক্রোম স্প্রিং কয়েল",
+      "image": "/images/chula-ceramic-clips.jpg",
+      "features": [
+        "লাল টকটকে নাইক্রোম হিটিং কয়েল",
+        "খাঁটি ফায়ারপ্রুফ সিরামিক পোড়া মাটির মজবুত বডি",
+        "সহজে পাতিল বসানোর মেটাল ক্লিপ স্ট্যান্ড",
+        "বিদ্যুৎ সাশ্রয়ী ১০০০ ওয়াট সিঙ্গেল ফেজ"
+      ]
+    },
+    {
+      "id": "model-8-1500",
+      "size": "8 inch",
+      "sizeNumber": 8,
+      "wattage": 1500,
+      "name": "8\" Heavy-Duty Heater Chula 1500W",
+      "bengaliName": "৮\" হেভি ডিউটি হিটার চুলা (১৫০০ ওয়াট)",
+      "subtitle": "১৫০০ ওয়াট লাল গ্লোয়িং কয়েল - দ্রুত পানি ফুটানো, ভাত-তরকারি রান্না",
+      "price": 1250,
+      "stock": 17,
+      "isSoldOut": false,
+      "roomCoverage": "ফ্যামিলি রান্না ও রুম ওয়ার্মিং",
+      "coils": "১৫০০W হেভি নাইক্রোম স্প্রিং কয়েল",
+      "image": "/images/chula-glowing-red.jpg",
+      "features": [
+        "৩ সেকেন্ডেই লাল টকটকে হয়ে দ্রুত তাপ ছড়ায়",
+        "হেভি ইনসুলেটেড সিরামিক বডি ও টার্মিনাল ব্লক",
+        "উচ্চ তাপদায়ক দীর্ঘস্থায়ী কয়েল",
+        "ক্যাশ অন ডেলিভারিতে সারাদেশে ফ্রি হোম ডেলিভারি"
+      ]
+    },
+    {
+      "id": "model-10-2500",
+      "size": "10 inch",
+      "sizeNumber": 10,
+      "wattage": 2500,
+      "name": "10\" Jumbo Heater Chula 2500W",
+      "bengaliName": "১০\" জাম্বো হিটার চুলা (২৫০০ ওয়াট)",
+      "subtitle": "বড় সাইজ ১০ ইঞ্চি সিরামিক চুলা - বড় পাতিল বসিয়ে ভারী রান্নার জন্য",
+      "price": 1750,
+      "stock": 14,
+      "isSoldOut": false,
+      "roomCoverage": "বড় পাতিল রান্না ও বড় রুম",
+      "coils": "২৫০০W হেভি গেজ পাওয়ার কয়েল",
+      "image": "/images/chula-angle-block.jpg",
+      "features": [
+        "১০ ইঞ্চি বড় সিরামিক প্লেট - বড় হাড়ি-পাতিল সহজে বসে",
+        "২৫০০ ওয়াট তীব্র তাপ ও দীর্ঘস্থায়ী কয়েল",
+        "উন্নত মানের তার ও হেভি কানেক্টর ব্লক",
+        "রান্না শেষ করে রুমের মধ্যে রাখলে ঘর চমৎকার গরম থাকে"
+      ]
+    },
+    {
+      "id": "model-10-3000",
+      "size": "10 inch",
+      "sizeNumber": 10,
+      "wattage": 3000,
+      "name": "10\" Turbo Power Heater Chula 3000W",
+      "bengaliName": "১০\" টার্বো পাওয়ার চুলা (৩০০০ ওয়াট)",
+      "subtitle": "সর্বোচ্চ ৩০০০ ওয়াট সুপার স্পিড হিটার চুলা - বাণিজ্যিক ও ঘরোয়া ভারী ব্যবহার",
+      "price": 2150,
+      "stock": 9,
+      "isSoldOut": false,
+      "roomCoverage": "হেভি ডিউটি ব্যবহার",
+      "coils": "৩০০০W আল্ট্রা-পাওয়ার কয়েল",
+      "image": "/images/chula-full-setup.jpg",
+      "features": [
+        "সর্বোচ্চ তাপ উৎপাদন ক্ষমতা ৩০০০ ওয়াট",
+        "হেভি ডিউটি কপার ওয়্যার ও ফায়ারপ্রুফ সিরামিক বডি",
+        "তীব্র শীতে ঘর গরম ও যেকোনো বড় রান্না দ্রুত সম্পন্ন করে",
+        "৭ দিনের রিপ্লেসমেন্ট ওয়ারেন্টি"
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": "SM-1001",
+      "customerName": "venome 22",
+      "phone": "01716891190",
+      "deliveryAddress": "rangpur",
+      "area": "Rangpur",
+      "modelId": "model-8-1000",
+      "modelName": "8\" Electric Heater Chula 1000W",
+      "modelSize": "8 inch",
+      "wattage": 1000,
+      "unitPrice": 950,
+      "quantity": 1,
+      "totalAmount": 950,
+      "deliveryFee": 0,
+      "status": "Delivered",
+      "source": "Website Direct",
+      "createdAt": "2026-11-17T21:36:44.514Z",
+      "deliveryDate": "2026-11-17",
+      "notes": ""
+    }
+  ],
+  "templates": [
+    {
+      "id": "tpl-confirmed",
+      "name": "Order confirmed",
+      "body": "Hello {customer_name}! Your order for {quantity}x {model} has been confirmed by Sojib's Mart. Total amount: {total} with 100% Free Home Delivery. Delivery Address: {address}. We are packing your heater chula right now!"
+    },
+    {
+      "id": "tpl-out-delivery",
+      "name": "Out for delivery",
+      "body": "Good news {customer_name}! Your electric heater chula ({model}) is out for delivery today to {address}. Please keep {total} ready in Cash on Delivery. Our delivery rider will reach you shortly."
+    },
+    {
+      "id": "tpl-delivered",
+      "name": "Delivered",
+      "body": "Thank you for shopping at Sojib's Mart, {customer_name}! Your {model} heater chula has been successfully delivered. Happy cooking & warm winter! Message us anytime if you need extra coils or wire."
+    },
+    {
+      "id": "tpl-cancelled",
+      "name": "Order cancelled",
+      "body": "Hello {customer_name}, as per your request/verification, your order #{order_id} for {model} has been cancelled. Feel free to contact Sojib's Mart if you change your mind!"
+    }
+  ],
+  "customizer": {
+    "theme": {
+      "primaryColor": "#7c3aed",
+      "primaryColorHover": "#6d28d9",
+      "logoType": "image",
+      "logoImageUrl": "/uploads/heater-product-1794953581498.jpg",
+      "faviconUrl": "/uploads/heater-product-1794953542927.jpg",
+      "shopName": "Sojib's Mart",
+      "tagline": "Electric Heater Chula & Room Heating"
+    },
+    "hero": {
+      "badge": "Electric Heater Chula • 100% Free Nationwide Delivery",
+      "headline": "A warmer room this winter.",
+      "headlineAccent": "Delivered free.",
+      "subHeadline": "Heavy-Duty Ceramic Electric Heater Stoves — Fast Cooking & Room Warmth",
+      "description": "High-temperature fireproof ceramic body with glowing red nichrome heating coils. Available in 8-inch and 10-inch models from 1000W to 3000W. Free doorstep delivery with Cash on Delivery across Bangladesh.",
+      "footnote": "Cash on Delivery • Package Inspection on Arrival • 7-Day Replacement Warranty",
+      "heroImageUrl": "/uploads/heater-product-1794951333947.jpg"
+    },
+    "sections": {
+      "perksTitle": "Why Buy From Sojib's Mart?",
+      "perksSubtitle": "Fireproof ceramic bodies, genuine glowing red nichrome heating coils, and fast delivery.",
+      "modelsTitle": "Select Your Electric Heater Chula Model",
+      "modelsSubtitle": "Available in 8\" (1000W & 1500W) and 10\" (2500W & 3000W). Genuine nichrome coils, safety pot stands, and free shipping.",
+      "stepsTitle": "How Ordering Works",
+      "stepsSubtitle": "Simple 3-step checkout with zero advance payment required."
+    },
+    "perks": [
+      {
+        "title": "100% Free Nationwide Delivery",
+        "description": "Zero shipping fee across Bangladesh. No advance payment required; inspect your parcel upon arrival with Cash on Delivery.",
+        "tag": "Free Shipping"
+      },
+      {
+        "title": "4 Tailored Heater Chula Models",
+        "description": "8\" (1000W & 1500W) for tea and daily cooking, and 10\" (2500W & 3000W) for heavy cooking pots and large room heating.",
+        "tag": "8\" & 10\" Ceramic"
+      },
+      {
+        "title": "Order Direct by Message",
+        "description": "No account needed. Place your order with 1 click on WhatsApp or Messenger for instant confirmation.",
+        "tag": "Instant Confirmation"
+      }
+    ],
+    "steps": [
+      {
+        "step": "01",
+        "title": "Choose Model & Enter Address",
+        "description": "Select your preferred wattage and fill in your name, phone number, and delivery address."
+      },
+      {
+        "step": "02",
+        "title": "Confirm Your Order",
+        "description": "Click \"Confirm Order\" to save your order directly or dispatch via WhatsApp."
+      },
+      {
+        "step": "03",
+        "title": "Receive & Pay Cash on Delivery",
+        "description": "Our rider brings your heater chula right to your doorstep. Inspect the parcel and pay cash on delivery."
+      }
+    ]
+  }
+}
