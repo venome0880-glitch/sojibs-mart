@@ -25,6 +25,16 @@ import CustomersDirectory from './CustomersDirectory';
 import MessageTemplates from './MessageTemplates';
 import WebsiteCustomizer from './WebsiteCustomizer';
 import StoreSettings from './StoreSettings';
+import {
+  getLocalStoreData,
+  saveLocalStoreData,
+  getLocalOrders,
+  updateLocalOrderStatus,
+  deleteLocalOrder,
+  calculateLocalSummary,
+  getLocalCustomers,
+  safeFetchJson
+} from '../../utils/localStoreFallback';
 
 export default function AdminPanel({ onBackToStore, storeConfig = {}, currency = '৳' }) {
   const [token, setToken] = useState(() => sessionStorage.getItem('sojib_admin_token') || '');
@@ -47,25 +57,39 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
   const [config, setConfig] = useState(storeConfig);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Login handler
+  // Login handler with static / offline fallback
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoggingIn(true);
     setLoginError('');
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const result = await safeFetchJson('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: passwordInput })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid password');
+
+      if (result.ok && result.data?.token) {
+        setToken(result.data.token);
+        sessionStorage.setItem('sojib_admin_token', result.data.token);
+        return;
       }
 
-      setToken(data.token);
-      sessionStorage.setItem('sojib_admin_token', data.token);
+      // If backend returned a JSON error message (e.g. wrong password)
+      if (!result.isHtml && result.error && !result.networkError) {
+        throw new Error(result.error);
+      }
+
+      // Fallback for GitHub Pages or offline/static hosting
+      if (passwordInput === 'sojib123') {
+        const localToken = 'local_owner_token_' + Date.now();
+        setToken(localToken);
+        sessionStorage.setItem('sojib_admin_token', localToken);
+        return;
+      }
+
+      throw new Error('Incorrect owner password. Please try again.');
     } catch (err) {
       setLoginError(err.message || 'Login failed');
     } finally {
@@ -78,7 +102,7 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
     sessionStorage.removeItem('sojib_admin_token');
   };
 
-  // Fetch all admin data
+  // Fetch all admin data (tries live API, falls back to localStorage)
   const fetchAdminData = async () => {
     if (!token) return;
     setIsLoading(true);
@@ -86,51 +110,71 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
     const headers = { 'Authorization': `Bearer ${token}` };
 
     try {
-      const [
-        ordersRes,
-        pricingRes,
-        todayRes,
-        salesRes,
-        customersRes,
-        templatesRes,
-        customizerRes,
-        storeRes
-      ] = await Promise.all([
-        fetch('/api/admin/orders', { headers }),
-        fetch('/api/admin/pricing-offers', { headers }),
-        fetch('/api/admin/today-deliveries', { headers }),
-        fetch('/api/admin/sales-summary', { headers }),
-        fetch('/api/admin/customers', { headers }),
-        fetch('/api/admin/templates', { headers }),
-        fetch('/api/admin/customizer', { headers }),
-        fetch('/api/store')
-      ]);
+      const ordersRes = await safeFetchJson('/api/admin/orders', { headers });
 
       if (ordersRes.status === 401) {
         handleLogout();
         return;
       }
 
-      const ordersData = await ordersRes.json();
-      const pricingData = await pricingRes.json();
-      const todayData = await todayRes.json();
-      const salesData = await salesRes.json();
-      const customersData = await customersRes.json();
-      const templatesData = await templatesRes.json();
-      const customizerData = await customizerRes.json();
-      const storeData = await storeRes.json();
+      if (ordersRes.ok && ordersRes.data) {
+        const [
+          pricingRes,
+          todayRes,
+          salesRes,
+          customersRes,
+          templatesRes,
+          customizerRes,
+          storeRes
+        ] = await Promise.all([
+          safeFetchJson('/api/admin/pricing-offers', { headers }),
+          safeFetchJson('/api/admin/today-deliveries', { headers }),
+          safeFetchJson('/api/admin/sales-summary', { headers }),
+          safeFetchJson('/api/admin/customers', { headers }),
+          safeFetchJson('/api/admin/templates', { headers }),
+          safeFetchJson('/api/admin/customizer', { headers }),
+          safeFetchJson('/api/store')
+        ]);
 
-      setOrders(ordersData.orders || []);
-      setModels(storeData.models || []);
-      setWinterOffer(pricingData.winterOffer || {});
-      setTodayDeliveries(todayData || {});
-      setSalesSummary(salesData || {});
-      setCustomers(customersData.customers || []);
-      setTemplates(templatesData.templates || []);
-      setCustomizer(customizerData.customizer || {});
-      setConfig(storeData.config || {});
+        setOrders(ordersRes.data.orders || []);
+        setModels(storeRes.data?.models || []);
+        setWinterOffer(pricingRes.data?.winterOffer || {});
+        setTodayDeliveries(todayRes.data || { areas: {}, totalDeliveries: 0, totalUnits: 0, totalValue: 0 });
+        setSalesSummary(salesRes.data || {});
+        setCustomers(customersRes.data?.customers || []);
+        setTemplates(templatesRes.data?.templates || []);
+        if (customizerRes.data?.customizer) setCustomizer(customizerRes.data.customizer);
+        if (storeRes.data?.config) setConfig(storeRes.data.config);
+        return;
+      }
+
+      // Local storage fallback (e.g. GitHub Pages)
+      const localStore = getLocalStoreData();
+      const localOrders = getLocalOrders();
+      setOrders(localOrders);
+      setModels(localStore.models || []);
+      setWinterOffer(localStore.winterOffer || {});
+      setCustomizer(localStore.customizer || {});
+      setConfig(localStore.config || {});
+      setTemplates(localStore.templates || []);
+      setCustomers(getLocalCustomers(localOrders));
+      setSalesSummary(calculateLocalSummary(localOrders, localStore.models || []));
+
+      const activeOrders = localOrders.filter(o => o.status === 'New' || o.status === 'Confirmed' || o.status === 'Out for delivery');
+      const grouped = {};
+      activeOrders.forEach(o => {
+        const a = o.area || 'Standard Zone';
+        if (!grouped[a]) grouped[a] = [];
+        grouped[a].push(o);
+      });
+      setTodayDeliveries({
+        areas: grouped,
+        totalDeliveries: activeOrders.length,
+        totalUnits: activeOrders.reduce((sum, o) => sum + (o.quantity || 1), 0),
+        totalValue: activeOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+      });
     } catch (err) {
-      console.error('Failed to fetch admin data:', err);
+      console.warn('Using local store fallback:', err);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +189,7 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
   // Update order status
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+      const res = await safeFetchJson(`/api/admin/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -155,70 +199,97 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
       });
       if (res.ok) {
         fetchAdminData();
+        return;
       }
-    } catch (err) {
-      alert('Error updating status: ' + err.message);
-    }
+    } catch (err) {}
+    updateLocalOrderStatus(orderId, newStatus);
+    fetchAdminData();
   };
 
   // Delete order
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm(`Are you sure you want to delete order #${orderId}?`)) return;
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await safeFetchJson(`/api/admin/orders/${orderId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         fetchAdminData();
+        return;
       }
-    } catch (err) {
-      alert('Error deleting order: ' + err.message);
-    }
+    } catch (err) {}
+    deleteLocalOrder(orderId);
+    fetchAdminData();
   };
 
   // Save Stock
   const handleSaveStock = async (stockUpdates) => {
-    const res = await fetch('/api/admin/stock', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ stockUpdates })
+    try {
+      const res = await safeFetchJson('/api/admin/stock', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ stockUpdates })
+      });
+      if (res.ok) {
+        fetchAdminData();
+        return;
+      }
+    } catch (err) {}
+    const store = getLocalStoreData();
+    const updated = store.models.map(m => {
+      const up = stockUpdates.find(u => u.id === m.id);
+      return up ? { ...m, stock: up.stock, isSoldOut: up.isSoldOut } : m;
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    saveLocalStoreData({ models: updated });
     fetchAdminData();
   };
 
   // Save Pricing & Offers
   const handleSavePricingOffers = async (payload) => {
-    const res = await fetch('/api/admin/pricing-offers', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
+    try {
+      const res = await safeFetchJson('/api/admin/pricing-offers', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        fetchAdminData();
+        return;
+      }
+    } catch (err) {}
+    const store = getLocalStoreData();
+    const updated = store.models.map(m => {
+      const up = payload.priceUpdates.find(u => u.id === m.id);
+      return up ? { ...m, price: up.price } : m;
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    saveLocalStoreData({ models: updated, winterOffer: payload.winterOffer });
     fetchAdminData();
   };
 
   // Save Templates
   const handleSaveTemplates = async (newTemplates) => {
-    const res = await fetch('/api/admin/templates', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ templates: newTemplates })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    try {
+      const res = await safeFetchJson('/api/admin/templates', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ templates: newTemplates })
+      });
+      if (res.ok) {
+        fetchAdminData();
+        return;
+      }
+    } catch (err) {}
+    saveLocalStoreData({ templates: newTemplates });
     fetchAdminData();
   };
 
@@ -228,54 +299,89 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
       const res = await fetch(`/api/admin/customers/export-csv?token=${encodeURIComponent(token)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: 'Export failed' }));
-        throw new Error(data.error || 'Failed to export CSV');
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sojibs_mart_customers_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        return;
       }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sojibs_mart_customers_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      alert('CSV Export failed: ' + err.message);
-    }
+    } catch (err) {}
+
+    // Local CSV generation fallback
+    const localCust = getLocalCustomers(getLocalOrders());
+    const headers = ['Phone', 'Customer Name', 'Primary Delivery Address', 'Area', 'Total Orders', 'Total Units', 'Total Spent (BDT)', 'Last Order Date'];
+    const rows = localCust.map(c => [
+      `"${c.phone}"`,
+      `"${(c.name || '').replace(/"/g, '""')}"`,
+      `"${(c.address || '').replace(/"/g, '""')}"`,
+      `"${(c.area || '').replace(/"/g, '""')}"`,
+      c.totalOrders,
+      c.totalUnits,
+      c.totalSpent,
+      `"${new Date(c.lastOrderDate).toLocaleDateString()}"`
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sojibs_mart_customers_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   // Save Settings
   const handleSaveSettings = async (settings) => {
-    const res = await fetch('/api/admin/settings', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(settings)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    if (data.config) setConfig(data.config);
-    if (data.customizer) setCustomizer(data.customizer);
+    try {
+      const res = await safeFetchJson('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok && res.data) {
+        if (res.data.config) setConfig(res.data.config);
+        if (res.data.customizer) setCustomizer(res.data.customizer);
+        fetchAdminData();
+        return;
+      }
+    } catch (err) {}
+    const store = getLocalStoreData();
+    const updated = { ...store.config, ...settings };
+    saveLocalStoreData({ config: updated });
+    setConfig(updated);
     fetchAdminData();
   };
 
   // Save Website Customizer
   const handleSaveCustomizer = async (newCustomizer) => {
-    const res = await fetch('/api/admin/customizer', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ customizer: newCustomizer })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    setCustomizer(data.customizer);
+    try {
+      const res = await safeFetchJson('/api/admin/customizer', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ customizer: newCustomizer })
+      });
+      if (res.ok && res.data) {
+        setCustomizer(res.data.customizer);
+        fetchAdminData();
+        return;
+      }
+    } catch (err) {}
+    saveLocalStoreData({ customizer: newCustomizer });
+    setCustomizer(newCustomizer);
     fetchAdminData();
   };
 

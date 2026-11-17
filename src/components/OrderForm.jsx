@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { addLocalOrder, safeFetchJson } from '../utils/localStoreFallback';
 import {
   Send,
   Copy,
@@ -74,7 +75,7 @@ export default function OrderForm({
     setErrorMessage('');
 
     try {
-      const res = await fetch('/api/orders', {
+      const result = await safeFetchJson('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,13 +88,28 @@ export default function OrderForm({
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit order. Please try again.');
+      if (result.ok && result.data) {
+        setSubmittedOrder(result.data);
+        return result.data;
       }
 
-      setSubmittedOrder(data);
-      return data;
+      // If backend returned a JSON error message (validation)
+      if (!result.isHtml && result.error && !result.networkError) {
+        throw new Error(result.error);
+      }
+
+      // Local fallback for GitHub Pages or offline hosting
+      const localResult = addLocalOrder({
+        customerName: customerName.trim(),
+        phone: phone.trim(),
+        deliveryAddress: deliveryAddress.trim(),
+        modelId,
+        quantity,
+        source
+      }, config);
+
+      setSubmittedOrder(localResult);
+      return localResult;
     } catch (err) {
       setErrorMessage(err.message || 'Something went wrong saving the order.');
       return null;

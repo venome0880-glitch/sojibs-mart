@@ -8,6 +8,7 @@ import HowOrderingWorks from './components/HowOrderingWorks';
 import OrderForm from './components/OrderForm';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel/AdminPanel';
+import { getLocalStoreData, safeFetchJson } from './utils/localStoreFallback';
 
 export default function App() {
   const [view, setView] = useState(() => {
@@ -54,14 +55,16 @@ export default function App() {
   // Fetch store data
   const fetchStoreData = async () => {
     try {
-      const res = await fetch('/api/store');
-      if (res.ok) {
-        const data = await res.json();
-        setStoreData(data);
+      const res = await safeFetchJson('/api/store');
+      if (res.ok && res.data) {
+        setStoreData(res.data);
+        return;
       }
     } catch (err) {
-      console.error('Failed to load store data:', err);
+      console.warn('API store unavailable, falling back to local data:', err);
     }
+    const local = getLocalStoreData();
+    setStoreData(local);
   };
 
   useEffect(() => {
