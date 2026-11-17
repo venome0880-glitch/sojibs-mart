@@ -37,7 +37,7 @@ import {
 } from '../../utils/localStoreFallback';
 
 export default function AdminPanel({ onBackToStore, storeConfig = {}, currency = '৳' }) {
-  const [token, setToken] = useState(() => sessionStorage.getItem('sojib_admin_token') || '');
+  const [token, setToken] = useState(() => localStorage.getItem('sojib_admin_token') || sessionStorage.getItem('sojib_admin_token') || '');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -72,6 +72,7 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
 
       if (result.ok && result.data?.token) {
         setToken(result.data.token);
+        localStorage.setItem('sojib_admin_token', result.data.token);
         sessionStorage.setItem('sojib_admin_token', result.data.token);
         return;
       }
@@ -85,6 +86,7 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
       if (passwordInput === 'sojib123') {
         const localToken = 'local_owner_token_' + Date.now();
         setToken(localToken);
+        localStorage.setItem('sojib_admin_token', localToken);
         sessionStorage.setItem('sojib_admin_token', localToken);
         return;
       }
@@ -99,6 +101,7 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
 
   const handleLogout = () => {
     setToken('');
+    localStorage.removeItem('sojib_admin_token');
     sessionStorage.removeItem('sojib_admin_token');
   };
 
@@ -111,11 +114,6 @@ export default function AdminPanel({ onBackToStore, storeConfig = {}, currency =
 
     try {
       const ordersRes = await safeFetchJson('/api/admin/orders', { headers });
-
-      if (ordersRes.status === 401) {
-        handleLogout();
-        return;
-      }
 
       if (ordersRes.ok && ordersRes.data) {
         const [
